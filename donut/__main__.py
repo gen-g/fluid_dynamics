@@ -1,0 +1,71 @@
+import os
+from tqdm import tqdm
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+def create_coodinate(limx, limy, dx):
+  x = np.arange(limx[0], limx[1], dx)
+  y = np.arange(limy[0], limy[1], dx)
+  X = np.meshgrid(x, y)
+  return X
+
+
+def df2dx2(u, axis):
+  if axis == 'x':
+    du = u[1:-1, 2:] - 2 * u[1:-1, 1:-1] + u[1:-1, :-2]
+    return du / (dx ** 2)
+  elif axis == 'y':
+    du = u[2:, 1:-1] - 2 * u[1:-1, 1:-1] + u[:-2, 1:-1]
+    return du / (dy ** 2)
+  else:
+    return
+
+
+def boundary_condition(u):
+  u[0, :] = 0
+  u[-1, :] = 0
+  u[:, 0] = 0
+  u[:, -1] = 0
+  return u
+
+
+def diffusion(u):
+  d = 4
+  dt = ((dx * dy) ** 2) / (2 * d * (dx ** 2 + dy ** 2))
+  # in bulk
+  du2dx = df2dx2(u, axis='x')
+  du2dy = df2dx2(u, axis='y')
+  difussion_term = d * dt * (du2dx + du2dy)
+
+  u0 = u.copy()
+  u0[1:-1, 1:-1] = u0[1:-1, 1:-1] + difussion_term
+  # on bound
+  u0 = boundary_condition(u0)
+  return u0
+
+
+if __name__ == '__main__':
+  dx = dy = 0.1
+  limx = (-10, 10 + dx)
+  limy = (-10, 10 + dy)
+  x = create_coodinate(limx, limy, dx)
+  u0 = np.zeros((x[0].shape))
+  # initial condition
+  for i in range(x[0].shape[0]):
+    for j in range(x[0].shape[1]):
+      r = np.sqrt(x[0][i, j] ** 2 + x[1][i, j] ** 2)
+      if r < 5 and r > 4:
+        u0[i, j] = 1000
+  u = [u0]
+  for t in tqdm(range(100)):
+    fig, ax = plt.subplots()
+    cs = ax.pcolormesh(x[0], x[1], u[t], cmap='hot', shading='auto')
+    ax.contour(x[0], x[1], u[t], cmap='rainbow')
+    fig.colorbar(cs, ax=ax)
+    fig.savefig(f"{os.path.dirname(__file__)}/plot/{t}.png")
+    plt.clf()
+    plt.close()
+
+    u0 = diffusion(u[t])
+    u.append(u0)
