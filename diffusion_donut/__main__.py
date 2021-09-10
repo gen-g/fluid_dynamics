@@ -1,4 +1,4 @@
-""" 1-dimensional diffusion equation
+""" 2-dimensional diffusion equation
 The equation is described as:
     u_xx + u_yy = u_t.
 The initial condition:
