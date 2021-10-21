@@ -20,11 +20,13 @@ def create_coordinate(limx, limy, dx):
     return X
 
 
-def df2dx2(u, axis):
+def df2dx2(u, dh, axis):
     if axis == 'x':
+        dx = dh
         du = u[1:-1, 2:] - 2 * u[1:-1, 1:-1] + u[1:-1, :-2]
         return du / (dx ** 2)
     elif axis == 'y':
+        dy = dh
         du = u[2:, 1:-1] - 2 * u[1:-1, 1:-1] + u[:-2, 1:-1]
         return du / (dy ** 2)
     else:
@@ -39,12 +41,12 @@ def boundary_condition(u):
     return u
 
 
-def diffusion(u):
+def diffusion(u, dx, dy):
     d = 4
     dt = ((dx * dy) ** 2) / (2 * d * (dx ** 2 + dy ** 2))
     # in bulk
-    du2dx = df2dx2(u, axis='x')
-    du2dy = df2dx2(u, axis='y')
+    du2dx = df2dx2(u, dx, axis='x')
+    du2dy = df2dx2(u, dy, axis='y')
     diffusion_term = d * dt * (du2dx + du2dy)
 
     u0 = u.copy()
@@ -54,7 +56,17 @@ def diffusion(u):
     return u0
 
 
-if __name__ == '__main__':
+def plot(x, u, t):
+    fig, ax = plt.subplots()
+    cs = ax.pcolormesh(x[0], x[1], u, cmap='hot', shading='auto')
+    ax.contour(x[0], x[1], u, cmap='rainbow')
+    fig.colorbar(cs, ax=ax)
+    fig.savefig(f"{os.path.dirname(__file__)}/plot/{t}.png")
+    plt.clf()
+    plt.close()
+
+
+def main():
     dx = dy = 0.1
     lim_x = (-10, 10 + dx)
     lim_y = (-10, 10 + dy)
@@ -68,13 +80,10 @@ if __name__ == '__main__':
                 u0[i, j] = 1000
     u = [u0]
     for t in tqdm(range(100)):
-        fig, ax = plt.subplots()
-        cs = ax.pcolormesh(x[0], x[1], u[t], cmap='hot', shading='auto')
-        ax.contour(x[0], x[1], u[t], cmap='rainbow')
-        fig.colorbar(cs, ax=ax)
-        fig.savefig(f"{os.path.dirname(__file__)}/plot/{t}.png")
-        plt.clf()
-        plt.close()
-
-        u0 = diffusion(u[t])
+        plot(x, u[t], t)
+        u0 = diffusion(u[t], dx, dy)
         u.append(u0)
+
+
+if __name__ == '__main__':
+    main()
