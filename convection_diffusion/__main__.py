@@ -43,7 +43,7 @@ def convection_diffusion(n, c, k, dt, dx):
 
 
 def main():
-    c = -1
+    c = 1 # >0
     k = 0
     dx = 0.1
     dt = 0.01
